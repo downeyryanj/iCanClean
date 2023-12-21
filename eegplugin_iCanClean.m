@@ -58,7 +58,8 @@
 %
 
 % plugin function for iCanClean tool
-function eegplugin_iCanClean(fig, try_strings, catch_strings)
+function vers = eegplugin_iCanClean(fig, try_strings, catch_strings)
+vers = '1.0'; %2023-12-21 initial release
 
 % create a callback function to pop_iCanClean
 cmd = '[EEG,LASTCOM] = pop_iCanClean(EEG, 1);'; %typically, uimenu calls pop function
