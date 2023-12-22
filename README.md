@@ -2,6 +2,7 @@ Here you find the iCanClean plugin for EEGLAB plugin which implements the iCanCl
 
 To install, please copy the entire iCanClean folder and paste it into the plugins folder where your EEGLAB installation is located.
 
+Please see figures S2 and S3 at https://www.mdpi.com/article/10.3390/s23198214/s1 for a brief explanation of the two graphic user interfaces: "Clean dataset" and "Find brain components (experimental)." 
 
 Please note that this software implements patented methods as described in:
 
