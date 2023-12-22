@@ -84,14 +84,18 @@ EEG_out = pop_select( EEG_in,'channel',xChan); %keep only EEG chans (xChan) to m
 switch projectionMethod
     case 0
         EEG_out.icasphere = eye(nChanX);%row dim matters
-        EEG_out.icaweights = A'; %column dim matters
+        EEG_out.icaweights = A'; %column dim matters. Channels should be zero mean
         EEG_out.icawinv = pinv(EEG_out.icaweights*EEG_out.icasphere);   %option 1
         pop_editoptions('option_computeica',1);
         EEG_out = eeg_checkset(EEG_out,'ica');
     case 1
-%     disp('overwritting inverse weights EXPERIMENTAL!!!!');
-    secretSauce = mrdivide(EEG_out.data,EEG_out.icaact);            %option 2
-    EEG_out.icawinv = secretSauce;%alternative topograph calc option
+    disp('overwritting inverse weights EXPERIMENTAL!!!!');
+%     secretSauce = mrdivide(EEG_out.data,EEG_out.icaact);            %option 2
+        EEG_out.icasphere = eye(nChanX);%row dim matters. 
+        EEG_out.icaweights = A'; %column dim matters. Channels should be zero mean
+        EEG_out.icawinv = mrdivide(EEG_out.data,U');            %option 2: alternative topograph calc option
+        pop_editoptions('option_computeica',1);
+        EEG_out = eeg_checkset(EEG_out,'ica');
     otherwise
         error('you did not provide a projection method (pinv or regression)')
 end

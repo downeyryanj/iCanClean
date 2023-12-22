@@ -214,7 +214,8 @@ EEG.icaact = [];
 EEG.icaweights = [];
 EEG.icawinv = [];
 EEG.icasphere = [];
-try EEG = rmfield(EEG,'dipfit'); catch; end
+% try EEG = rmfield(EEG,'dipfit'); catch; end
+try EEG.dipfit=[]; catch; end
 try EEG.etc.ic_classification = rmfield(EEG.etc.ic_classification,'ICLabel'); catch; end
 
 % duplicate and filt chans
@@ -289,8 +290,11 @@ try EEG.etc.ic_classification = rmfield(EEG.etc.ic_classification,'ICLabel'); ca
         compIndToPlot = (numCompsAvail-numToPlot+1):numCompsAvail;
         
         % NOT IMPLEMENTED???? Auto exclude components (from compIndToPlot) with r^2 > maxCompsCoeff 
-        
-        pop_viewprops( EEG, 0, compIndToPlot, {'freqrange', [2 80]}, {}, 1, '' ) %optional viewing properties
+        try
+            pop_viewprops( EEG, 0, compIndToPlot, {'freqrange', [2 80]}, {}, 1, '' ) %optional viewing properties
+        catch
+            warning('Please make sure you have installed the ViewProps plugin for eeglab');
+        end
     end
     
 % Output data

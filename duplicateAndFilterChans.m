@@ -80,7 +80,7 @@ end
 
 %Filter data
 if hicutoff < locutoff %should not be true if one of locutoff or hicutoff is empty
-    disp('hi ryan');
+    %disp('hi ryan');
     tempEEG = pop_eegfiltnew(tempEEG, 'locutoff',locutoff,'hicutoff',hicutoff,'revfilt',true); %notch filter
 else
 tempEEG = pop_eegfiltnew(tempEEG, 'locutoff',locutoff,'hicutoff',hicutoff); %BP
