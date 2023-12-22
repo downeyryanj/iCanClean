@@ -1,4 +1,4 @@
-Here you find the iCanClean plugin for EEGLAB plugin which implements the iCanClean algorithm as described in https://doi.org/10.3390/s23198214.
+Here you find the iCanClean plugin for EEGLAB plugin which implements the iCanClean algorithm as described in https://doi.org/10.3390/s23198214. iCanClean removes artifacts from EEG using concurrently recorded noise signals, or optionally it will generate its own pseudo-noise signals. iCanClean has been shown to remove eye, muscle, motion, and line-noise artifacts in phantom EEG data. iCanClean has also been shown to remove motion artifacts from human mobile EEG data using dual-layer noise electrodes (https://doi.org/10.3390/s23020928).  
 
 To install, please copy the entire iCanClean folder and paste it into the plugins folder where your EEGLAB installation is located.
 
