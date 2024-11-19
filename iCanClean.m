@@ -171,13 +171,13 @@ if(params.useBoundary) %optionally use boundary events to define windows
         tStart = horzcat(tStart,boundaries(i):params.stepSize:boundaries(i+1)); %#ok<AGROW> %array of times defining start of window (moving or static)
         if isempty(tStart), tStart = 0; end %helping to avoid a bug momentarily
         tEnd = horzcat(tEnd,(boundaries(i):params.stepSize:boundaries(i+1))+params.cleanWindow); %#ok<AGROW> %array of end times
-        tEnd(end) = boundaries(i+1);
+        %tEnd(end) = boundaries(i+1); %v1.0.2 fix
     end
 else %ignore boundary events (default)
     tStart = 0:params.stepSize:tTotal; %array of times defining start of window (moving or static)
     if isempty(tStart), tStart = 0; end %helping to avoid a bug momentarily
     tEnd = tStart+params.cleanWindow; %array of end times
-    tEnd(end) = tTotal;
+    %tEnd(end) = tTotal; %v1.0.2 fix
 end
 
 %% start starts figure (fill in with data later)
@@ -294,18 +294,19 @@ for window_i = 1:numWindows
     BW_leftEdge = tStart(window_i)-extraTime_pre; %if start is < 0, we need to add post time
     BW_rightEdge = tEnd(window_i)+extraTime_post; %if end is > tTotal, we need to add pre time
     if(boundaryEnd-boundaryStart < params.statsWindow)
-        broadWindow = find( t>=boundaryStart & t<=boundaryEnd );
-    elseif(BW_leftEdge < boundaryStart)
-        broadWindow = find( t>=boundaryStart & t<=tEnd(window_i)+extraTime_post+(boundaryStart-BW_leftEdge) );
-    elseif(BW_rightEdge > boundaryEnd)
-        addMorePre = params.cleanWindow - (tEnd(window_i)-tStart(window_i)); %last window in a segment is short
-        broadWindow = find( t>=tStart(window_i)-extraTime_pre-(BW_rightEdge-boundaryEnd)-addMorePre & t<=boundaryEnd );
+        broadWindow = find( t>=boundaryStart & t<=boundaryEnd ); %use whatever data we have available if boundary events are closer together than what we would want our stats window to be. Note: you could edit this script to instead ignore (not clean) that window if you want to avoid overcleaning from lack of data
+    elseif(BW_leftEdge < boundaryStart) %early windows looking for data to left that does not exist
+		addMorePost = (boundaryStart-BW_leftEdge);
+        broadWindow = find( t>=boundaryStart & t<=BW_rightEdge+addMorePost );
+    elseif(BW_rightEdge > boundaryEnd)%later windows looking for data to right that does not exist
+        addMorePre = BW_rightEdge-boundaryEnd; %v1.0.2 fix 
+        broadWindow = find( t>=BW_leftEdge-addMorePre & t<=boundaryEnd ); %v1.0.2 fix
     else %otherwise, define normally
-        broadWindow = find( t>=tStart(window_i)-extraTime_pre & t<=tEnd(window_i)+extraTime_post );
+        broadWindow = find( t>=BW_leftEdge & t<=BW_rightEdge ); %note this broadWindow is what stats are done on (CCA and calc projection). Meanwhile, only the cleaning window (subset of broad window) has cleaning applied to it. For example you can clean 1 sample at a time (cleaning window) using a moving window of 2 seconds of data (broad window)
     end
     
     %% grab data in local window
-    [~, locb1]  = ismember(window,broadWindow);
+    [~, locb1]  = ismember(window,broadWindow); %locb1 is helping us know where the segment of data we want to clean is located (relative to the larger stats window "broadWindow")
     
     X_localWindow = X_orig(:, broadWindow)';
     Y_localWindow = Y_orig(:, broadWindow)';
@@ -315,6 +316,12 @@ for window_i = 1:numWindows
     %% calculate noise sources using CCA
     if any(isnan(X_localWindow_temp(:))) || any(isnan(Y_localWindow_temp(:))) %if missing data (NaN)
         disp('I coud not clean this section because you have NaN')
+        nT = size(X_localWindow_temp,1); nX = size(X_localWindow_temp,2); nY = size(Y_localWindow_temp,2); nS = min(nX,nY);
+        R = zeros(nS,1);
+        U = zeros(nT,nS);
+        V = U;
+    elseif size(X_localWindow_temp,1) < 2 || size(Y_localWindow_temp,1) < 2 %need at least 2 rows for canoncorr function to run
+        disp('I coud not clean this section because there needs to be at least 2 rows of data points for X and Y for matlab CCA function')
         nT = size(X_localWindow_temp,1); nX = size(X_localWindow_temp,2); nY = size(Y_localWindow_temp,2); nS = min(nX,nY);
         R = zeros(nS,1);
         U = zeros(nT,nS);
@@ -377,6 +384,7 @@ for window_i = 1:numWindows
         end
     end
     %% define which noise sources to use to clean each of the original channels
+
     %i.e. do you want to clean using mixtures of X or mixtures of Y?
     switch params.cleanXwith
         case {'X','U'},     xNoiseSources = U(:,badComps);
@@ -425,7 +433,9 @@ for window_i = 1:numWindows
     %% update user on progress (assuming moving window)
     %     fprintf(repmat('\b',1,msg_n+1));
     if params.giveCleaningUpdates
-        msg = ['iCanClean cleaned [',num2str([tStart(window_i) tEnd(window_i)]),']s. Removed ',num2str(length(badComps)),' bad sources in this window'];
+        %msg = ['iCanClean cleaned [',num2str([tStart(window_i) tEnd(window_i)]),']s. Removed ',num2str(length(badComps)),' bad sources in this window'];
+		msg = ['iCanClean cleaned [',num2str([t(broadWindow(locb1(1))) t(broadWindow(locb1(end)))]),']s. Removed ',num2str(length(badComps)),' bad sources in this window']; %v1.0.2 (needed to fix now that tEnd(end) defined differently)
+																																										  
         disp(msg);
         
         %     msg_n = length(msg);
